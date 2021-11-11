@@ -1,0 +1,11 @@
+program{
+
+factoriel(int n)-> int{
+int n= n*n-1;
+@factoriel(n);
+
+} 
+main() ->void{
+print("Factoriel= ",@factoriel(18));
+}
+}

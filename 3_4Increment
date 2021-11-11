@@ -1,0 +1,12 @@
+program {
+ main() -> void {  
+ int[] arr = int[];
+int n, sum, a;
+a=0;
+while(a<n){
+a=a+1;
+print("Enter a number");
+read(arr=int[n]);}
+
+print("The total sum is: ", sum);
+}

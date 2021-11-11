@@ -1,0 +1,10 @@
+
+program{
+
+sum(int i, int m) ->
+int{
+return m*n;}
+
+main() -> void{
+Print("Sum is: " @sum(8, 5));
+}}
