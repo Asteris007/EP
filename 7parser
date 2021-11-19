@@ -1,0 +1,460 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
+
+package parser;
+
+import bg.tu_varna.kst_sit.ci_ep.ast.AST;
+import bg.tu_varna.kst_sit.ci_ep.ast.ActualParameterNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.BlockNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.FormalParameterNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.ProgramBodyNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.TypedVariableNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.ArrayInitNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.AssignableNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.CharacterLiteralNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.StringLiteralNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.ArrayLengthNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.BooleanNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.ExpressionNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.FunctionCall;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.IntegerNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.VariableNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.operators.binary_operators.additive_operators.AdditionNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.operators.binary_operators.additive_operators.SubtractionNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.operators.binary_operators.logical_operators.AndNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.operators.binary_operators.logical_operators.OrNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.operators.binary_operators.multiplicative_operators.DivisionNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.operators.binary_operators.multiplicative_operators.ModNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.operators.binary_operators.multiplicative_operators.MultiplicationNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.operators.binary_operators.relational_operators.EqualsNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.operators.binary_operators.relational_operators.GreaterNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.operators.binary_operators.relational_operators.GreaterOrEqualNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.operators.binary_operators.relational_operators.LessNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.operators.binary_operators.relational_operators.LessOrEqualNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.operators.binary_operators.relational_operators.NotEqualNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.operators.unary_operators.MinusNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.assignable.expression.operators.unary_operators.NotNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.global_definition.FunctionDefinitionNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.global_definition.GlobalDefinitionNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.global_definition.VariableDefinitionNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.statement.AssignmentNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.statement.IfStatementNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.statement.PrintStatementNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.statement.ReadStatementNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.statement.ReturnStatementNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.statement.Statement;
+import bg.tu_varna.kst_sit.ci_ep.ast.statement.WhileStatementNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.type.PrimitiveTypeNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.type.TypeNode;
+import bg.tu_varna.kst_sit.ci_ep.ast.type.VoidTypeNode;
+import bg.tu_varna.kst_sit.ci_ep.exceptions.SyntaxException;
+import bg.tu_varna.kst_sit.ci_ep.lexer.Lexer;
+import bg.tu_varna.kst_sit.ci_ep.lexer.token.Token;
+import bg.tu_varna.kst_sit.ci_ep.parser.Parser;
+import bg.tu_varna.kst_sit.ci_ep.source.SourceImpl;
+import bg.tu_varna.kst_sit.ci_ep.utils.CompilerTestHelper;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import lexer.LexerImpl;
+import token.TokenType;
+
+public class ParserImpl extends Parser<TokenType, AST> {
+    public ParserImpl(Lexer<TokenType> lexer) {
+        super(lexer);
+    }
+
+    private void accept(TokenType tokenType) {
+        if (this.currentToken.getTokenType() != tokenType) {
+            throw new SyntaxException("Token doesn't match! Expected " + tokenType.value + ", Got " + ((TokenType)this.currentToken.getTokenType()).value, this.currentToken);
+        } else {
+            this.currentToken = this.lexer.nextToken();
+        }
+    }
+
+    public AST entryRule() {
+        this.accept(TokenType.PROGRAM);
+        this.accept(TokenType.LBRACKET);
+        this.programBody();
+        this.accept(TokenType.RBRACKET);
+        return (AST)this.currentNode;
+    }
+
+    void programBody() {
+        ArrayList globalDefinitions;
+        for(globalDefinitions = new ArrayList(); TokenType.isPrimitiveType((TokenType)this.currentToken.getTokenType()) || this.currentToken.getTokenType() == TokenType.IDENTIFIER && !this.currentToken.getText().equals("main"); globalDefinitions.add((GlobalDefinitionNode)this.currentNode)) {
+            if (this.currentToken.getTokenType() == TokenType.IDENTIFIER) {
+                this.functionDefinition();
+            } else {
+                this.variableDefinition();
+                this.accept(TokenType.SEMICOLON);
+            }
+        }
+
+        this.mainFunction();
+        globalDefinitions.add((GlobalDefinitionNode)this.currentNode);
+        this.currentNode = new ProgramBodyNode((Token)null, globalDefinitions);
+    }
+
+    void functionDefinition() {
+        Token token = this.currentToken;
+        FormalParameterNode formalParameters = null;
+        if (TokenType.isPrimitiveType((TokenType)this.currentToken.getTokenType())) {
+            formalParameters = (FormalParameterNode)this.currentNode;
+        }
+
+        Object typeNode;
+        if (this.currentToken.getTokenType() == TokenType.VOID) {
+            typeNode = new VoidTypeNode(this.currentToken);
+        } else {
+            typeNode = (TypeNode)this.currentNode;
+        }
+
+        BlockNode blockNode = (BlockNode)this.currentNode;
+        this.currentNode = new FunctionDefinitionNode(token, formalParameters, (TypeNode)typeNode, blockNode);
+    }
+
+    void functionCall() {
+        Token token = this.currentToken;
+        ActualParameterNode actualParameters = null;
+        if (TokenType.isLiteralTerminal((TokenType)this.currentToken.getTokenType())) {
+            actualParameters = (ActualParameterNode)this.currentNode;
+        }
+
+        this.currentNode = new FunctionCall(token, actualParameters);
+    }
+
+    void type() {
+        Token token = this.currentToken;
+        boolean isArray = false;
+        if (TokenType.isPrimitiveType((TokenType)this.currentToken.getTokenType())) {
+            this.accept((TokenType)this.currentToken.getTokenType());
+            if (this.currentToken.getTokenType() == TokenType.LSQUARE) {
+                isArray = true;
+            }
+
+            this.currentNode = new PrimitiveTypeNode(token, isArray);
+        } else {
+            throw new SyntaxException("Expected return type. Got " + ((TokenType)this.currentToken.getTokenType()).value, this.currentToken);
+        }
+    }
+
+    void formalParameters() {
+        List<TypedVariableNode> formalParameters = new ArrayList();
+        formalParameters.add(new TypedVariableNode((Token)null, (TypeNode)this.currentNode, new VariableNode(this.currentToken, (ExpressionNode)null)));
+
+        while(this.currentToken.getTokenType() == TokenType.COMMA) {
+            formalParameters.add(new TypedVariableNode((Token)null, (TypeNode)this.currentNode, new VariableNode(this.currentToken, (ExpressionNode)null)));
+        }
+
+        this.currentNode = new FormalParameterNode((Token)null, formalParameters);
+    }
+
+    void actualParameters() {
+        List<AssignableNode> params = new ArrayList();
+        params.add((AssignableNode)this.currentNode);
+
+        while(this.currentToken.getTokenType() == TokenType.COMMA) {
+            params.add((AssignableNode)this.currentNode);
+        }
+
+        this.currentNode = new ActualParameterNode((Token)null, params);
+    }
+
+    void variableDefinition() {
+        TypeNode type = (TypeNode)this.currentNode;
+        this.currentNode = new VariableDefinitionNode((Token)null, type, (AssignmentNode)this.currentNode);
+    }
+
+    void assignment() {
+        VariableNode variable = (VariableNode)this.currentNode;
+        Token token = this.currentToken;
+        if (TokenType.isPrimitiveType((TokenType)this.currentToken.getTokenType())) {
+            this.arrayInitialization();
+        } else if (TokenType.CHAR_LITERAL == this.currentToken.getTokenType()) {
+            this.characterLiteral();
+        } else if (TokenType.STRING_LITERAL == this.currentToken.getTokenType()) {
+            this.stringLiteral();
+        } else {
+            this.expression();
+        }
+
+        AssignableNode assignable = (AssignableNode)this.currentNode;
+        this.currentNode = new AssignmentNode(token, variable, assignable);
+    }
+
+    void arrayInitialization() {
+        Token token = this.currentToken;
+        ExpressionNode expression = null;
+        if (TokenType.isPrimitiveType((TokenType)this.currentToken.getTokenType())) {
+            expression = (ExpressionNode)this.currentNode;
+        } else {
+            System.out.println("Expected array initialization. Got " + this.currentToken.getTokenType());
+        }
+
+        this.currentNode = new ArrayInitNode(token, expression);
+    }
+
+    void block() {
+        ArrayList statements = new ArrayList();
+
+        while(TokenType.isStatementTerminal((TokenType)this.currentToken.getTokenType())) {
+            statements.add((Statement)this.currentNode);
+        }
+
+        this.currentNode = new BlockNode((Token)null, statements);
+    }
+
+    void expression() {
+        Token<TokenType> token = this.currentToken;
+        ExpressionNode left = (ExpressionNode)this.currentNode;
+        if (TokenType.isRelationalOperator((TokenType)this.currentToken.getTokenType())) {
+            ExpressionNode relationalOperator = null;
+            ExpressionNode right = (ExpressionNode)this.currentNode;
+            switch((TokenType)token.getTokenType()) {
+            case EQUALS:
+                relationalOperator = new EqualsNode(token, left, right);
+                break;
+            case NOTEQUALS:
+                relationalOperator = new NotEqualNode(token, left, right);
+                break;
+            case GREATER:
+                relationalOperator = new GreaterNode(token, left, right);
+                break;
+            case GREATER_EQ:
+                relationalOperator = new GreaterOrEqualNode(token, left, right);
+                break;
+            case LESS:
+                relationalOperator = new LessNode(token, left, right);
+                break;
+            case LESS_EQ:
+                relationalOperator = new LessOrEqualNode(token, left, right);
+            }
+
+            this.currentNode = relationalOperator;
+        }
+
+    }
+
+    void simpleExpression() {
+        Object additiveOperator;
+        for(Object left = (ExpressionNode)this.currentNode; TokenType.isOperatorGroupOne((TokenType)this.currentToken.getTokenType()); this.currentNode = additiveOperator) {
+            Token<TokenType> token = this.currentToken;
+            ExpressionNode right = (ExpressionNode)this.currentNode;
+            additiveOperator = null;
+            switch((TokenType)token.getTokenType()) {
+            case PLUS:
+                additiveOperator = new AdditionNode(token, (ExpressionNode)left, right);
+                break;
+            case MINUS:
+                additiveOperator = new SubtractionNode(token, (ExpressionNode)left, right);
+                break;
+            case OR:
+                additiveOperator = new OrNode(token, (ExpressionNode)left, right);
+            }
+
+            left = additiveOperator;
+        }
+
+    }
+
+    void signedTerm() {
+        Token<TokenType> token = null;
+        if (TokenType.isUnaryOperator((TokenType)this.currentToken.getTokenType())) {
+            token = this.currentToken;
+        }
+
+        ExpressionNode operand = (ExpressionNode)this.currentNode;
+        if (token != null) {
+            switch((TokenType)token.getTokenType()) {
+            case MINUS:
+                operand = new MinusNode(token, (ExpressionNode)operand);
+                break;
+            case NOT:
+                operand = new NotNode(token, (ExpressionNode)operand);
+            }
+        }
+
+        this.currentNode = operand;
+    }
+
+    void term() {
+        Object multiplicativeOperator;
+        for(Object left = (ExpressionNode)this.currentNode; TokenType.isOperatorGroupTwo((TokenType)this.currentToken.getTokenType()); this.currentNode = multiplicativeOperator) {
+            Token<TokenType> token = this.currentToken;
+            ExpressionNode right = (ExpressionNode)this.currentNode;
+            multiplicativeOperator = null;
+            switch((TokenType)token.getTokenType()) {
+            case MUL:
+                multiplicativeOperator = new MultiplicationNode(token, (ExpressionNode)left, right);
+                break;
+            case DIV:
+                multiplicativeOperator = new DivisionNode(token, (ExpressionNode)left, right);
+                break;
+            case MOD:
+                multiplicativeOperator = new ModNode(token, (ExpressionNode)left, right);
+                break;
+            case AND:
+                multiplicativeOperator = new AndNode(token, (ExpressionNode)left, right);
+            }
+
+            left = multiplicativeOperator;
+        }
+
+    }
+
+    void factor() {
+        switch((TokenType)this.currentToken.getTokenType()) {
+        case IDENTIFIER:
+        case LENGTH:
+        case LPAREN:
+        case AT:
+            break;
+        case NUMBER:
+            this.currentNode = new IntegerNode(this.currentToken);
+            break;
+        case TRUE:
+        case FALSE:
+            this.currentNode = new BooleanNode(this.currentToken);
+            break;
+        default:
+            throw new SyntaxException("Expected factor. Got " + ((TokenType)this.currentToken.getTokenType()).value, this.currentToken);
+        }
+
+    }
+
+    void variable() {
+        Token token = this.currentToken;
+        ExpressionNode expression = null;
+        if (this.currentToken.getTokenType() == TokenType.LSQUARE) {
+            expression = (ExpressionNode)this.currentNode;
+        }
+
+        this.currentNode = new VariableNode(token, expression);
+    }
+
+    void mainFunction() {
+        Token token = this.currentToken;
+        TypeNode typeNode = new VoidTypeNode(this.currentToken);
+        this.currentNode = new FunctionDefinitionNode(token, (FormalParameterNode)null, typeNode, (BlockNode)this.currentNode);
+    }
+
+    void statement() {
+        if (TokenType.isCompoundStatementTerminal((TokenType)this.currentToken.getTokenType())) {
+        }
+
+    }
+
+    void simpleStatement() {
+        switch((TokenType)this.currentToken.getTokenType()) {
+        case IDENTIFIER:
+        case AT:
+        case INT:
+        case CHAR:
+        case BOOLEAN:
+        case RETURN:
+        case PRINT:
+        case READ:
+            return;
+        case NUMBER:
+        case TRUE:
+        case FALSE:
+        case LENGTH:
+        case LPAREN:
+        default:
+            throw new SyntaxException("Expected simpleStatement. Got " + ((TokenType)this.currentToken.getTokenType()).value, this.currentToken);
+        }
+    }
+
+    void compoundStatement() {
+        if (this.currentToken.getTokenType() == TokenType.IF) {
+        }
+
+    }
+
+    void ifStatement() {
+        Token token = this.currentToken;
+        ExpressionNode expressionNode = (ExpressionNode)this.currentNode;
+        BlockNode ifStatement = (BlockNode)this.currentNode;
+        BlockNode elseStatement = null;
+        if (this.currentToken.getTokenType() == TokenType.ELSE) {
+            elseStatement = (BlockNode)this.currentNode;
+        }
+
+        this.currentNode = new IfStatementNode(token, expressionNode, ifStatement, elseStatement);
+    }
+
+    void whileStatement() {
+        Token token = this.currentToken;
+        ExpressionNode expressionNode = (ExpressionNode)this.currentNode;
+        BlockNode blockNode = (BlockNode)this.currentNode;
+        this.currentNode = new WhileStatementNode(token, expressionNode, blockNode);
+    }
+
+    void returnStatement() {
+        Token token = this.currentToken;
+        AssignableNode assignable = null;
+        if (TokenType.isLiteralTerminal((TokenType)this.currentToken.getTokenType())) {
+            assignable = (AssignableNode)this.currentNode;
+        }
+
+        this.currentNode = new ReturnStatementNode(token, assignable);
+    }
+
+    void printStatement() {
+        Token token = this.currentToken;
+        ActualParameterNode actualParameters = (ActualParameterNode)this.currentNode;
+        this.currentNode = new PrintStatementNode(token, actualParameters);
+    }
+
+    void readStatement() {
+        Token token = this.currentToken;
+        List<VariableNode> variables = new ArrayList();
+        this.accept(TokenType.READ);
+        this.accept(TokenType.LPAREN);
+
+        while(this.currentToken.getTokenType() == TokenType.IDENTIFIER) {
+            this.variable();
+            variables.add((VariableNode)this.currentNode);
+        }
+
+        this.accept(TokenType.RPAREN);
+        this.currentNode = new ReadStatementNode(token, variables);
+    }
+
+    void assignable() {
+        if (TokenType.isFactorTerminal((TokenType)this.currentToken.getTokenType())) {
+            this.expression();
+        } else if (TokenType.isPrimitiveType((TokenType)this.currentToken.getTokenType())) {
+            this.arrayInitialization();
+        } else if (TokenType.CHAR_LITERAL == this.currentToken.getTokenType()) {
+            this.characterLiteral();
+        } else {
+            this.stringLiteral();
+        }
+
+    }
+
+    void characterLiteral() {
+        this.currentNode = new CharacterLiteralNode(this.currentToken);
+        this.accept(TokenType.CHAR_LITERAL);
+    }
+
+    void stringLiteral() {
+        this.currentNode = new StringLiteralNode(this.currentToken);
+        this.accept(TokenType.STRING_LITERAL);
+    }
+
+    void arrayLength() {
+        Token token = this.currentToken;
+        this.currentNode = new ArrayLengthNode(token, (VariableNode)this.currentNode);
+    }
+
+    public static void main(String[] args) throws IOException {
+        Lexer<TokenType> lexer = new LexerImpl(new SourceImpl("resources/Fib.txt"));
+        Parser<TokenType, AST> parser = new ParserImpl(lexer);
+        System.out.println(CompilerTestHelper.getASTasString(parser));
+    }
+}
