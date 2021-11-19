@@ -1,0 +1,59 @@
+6_a B : abB
+
+void B()
+{
+accept(a);
+accept(b);
+B();
+}
+
+6_b  B : a(bB)*
+
+void B()
+{
+accept(a);
+while(currentToken ==b)
+{
+accept(b);
+B();
+}
+}
+
+6_v B : a(bB)?
+
+void B()
+{
+accept(a);
+if(currentToken ==b)
+{
+accept(b);
+B();
+}
+}
+
+6_g B : aA | bB | c(aC)*
+
+void B()
+{
+switch (currentToken)
+{
+case a:
+accept(a);
+A();
+break;
+case b:
+accept(b);
+B();
+break;
+case c:
+accept(c);
+while(currentToken==a){
+accept(a);
+C();
+}
+}
+break;
+default:
+SyntaxExeption(“Token doesn’t match!”);
+}
+
